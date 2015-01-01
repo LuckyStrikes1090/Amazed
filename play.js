@@ -19,14 +19,19 @@ Game.Play.prototype = {
         // Initialization for the cursor keys used in player movement
         this.cursors = this.game.input.keyboard.createCursorKeys();
         this.soundKey = this.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+        this.soundKey.onDown.add(this.pauseMusic, this);
         
         this.loadMap();
+        
         // Loads the player with the playerStart position from Tiled
         var result = this.findObjectsByType('playerStart', this.map, 'objectsLayer');
         this.player = this.game.add.sprite(result[0].x, result[0].y, 'player');
         this.game.physics.arcade.enable(this.player);
         this.player.body.collideWorldBounds = true;
         // this.player.body.gravity.y = 1000;
+        this.player.animations.add('run', [1,2,3], 10, true); // Add a running animation
+        
+        
         this.game.camera.follow(this.player); // Sets the camera to follow the player object
         // Label to give the amount of gems collected per level
         this.labelGem = game.add.text(20, 20, '0', {font: '30px Arial', fill: '#ffff00'});
@@ -38,25 +43,29 @@ Game.Play.prototype = {
         this.game.physics.arcade.collide(this.player, this.blockedlayer); // Player and the blockedLayer of the tilemap
         this.game.physics.arcade.overlap(this.player, this.items, this.collect, null, this); // Player and the gems
         this.game.physics.arcade.overlap(this.player, this.ladder, this.nextLevel, null, this); // Player and the ladder
+        this.game.physics.arcade.overlap(this.player, this.water, this.restartGame, null, this); // Player and the water
         
         this.player.body.velocity.y = 0; // Set players velocity to 0 after every update
         this.player.body.velocity.x = 0;
         // Cursor keys to control the player
         if (this.cursors.up.isDown) {
-            this.player.body.velocity.y -= 50;
+            this.player.body.velocity.y -= 75;
         }
         else if (this.cursors.down.isDown) {
-            this.player.body.velocity.y += 50;
+            this.player.body.velocity.y += 75;
         }
         if (this.cursors.left.isDown) {
-            this.player.body.velocity.x -= 50;
+            this.player.body.velocity.x -= 75;
         }
         else if (this.cursors.right.isDown) {
-            this.player.body.velocity.x += 50;
+            this.player.body.velocity.x += 75;
         }
         
-        if (this.soundKey.isDown) {
-            gameMusic.pause();
+        if (this.player.body.velocity.x != 0 || this.player.body.velocity.y != 0) {
+            this.player.animations.play('run');
+        }
+        else {
+            this.player.animations.stop('run');
         }
     },
         
@@ -71,6 +80,7 @@ Game.Play.prototype = {
         
         this.createItems();  // Call to create items
         this.createLadder(); // Call to create laddders
+        this.createWater(); // Call to create the water
     },
     
     createItems: function() {
@@ -91,6 +101,16 @@ Game.Play.prototype = {
         result = this.findObjectsByType('ladder', this.map, 'objectsLayer');
         result.forEach(function(element) {
             this.createFromTiledObject(element, this.ladder);
+        }, this);
+    },
+    
+    createWater: function() {
+        // Creates a group for the water tiles, based on the 'water' type in the Tiled tilemap
+        this.water = this.game.add.group();
+        this.water.enableBody = true;
+        result = this.findObjectsByType('water', this.map, 'objectsLayer');
+        result.forEach(function(element) {
+            this.createFromTiledObject(element, this.water);
         }, this);
     },
     
@@ -130,11 +150,27 @@ Game.Play.prototype = {
         }
     },
     
+    restartGame: function() {
+        game.state.start('Play');  
+    },
+    
     collect: function(player, collectable) {
         // Collects the gems for the player
         gems += 1;
         this.labelGem.text = gems;
         console.log('collected');
         collectable.destroy();
+    },
+    
+    pauseMusic: function() {
+        console.log("Spacebar pressed");
+        if (playMusic) {
+            gameMusic.pause();
+            playMusic = false;
+        }
+        else {
+            gameMusic.restart();
+            playMusic = true;
+        }
     },
 };

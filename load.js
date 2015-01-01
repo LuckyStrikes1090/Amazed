@@ -11,8 +11,8 @@
 Game = {};
 
 var tileSize = 32;
-var width = tileSize * 12;
-var height = tileSize * 10;
+var width = 320;
+var height = 320;
 var gems = 0;
 var level = ['map', 'map1', 'map2'];
 
@@ -46,10 +46,11 @@ Game.Load.prototype = {
         game.load.tilemap('map2', 'assets/tilemap2.json', null, Phaser.Tilemap.TILED_JSON);
         
         game.load.image('tileset', 'images/tileset.png');
-		game.load.image('player', 'images/player.png');
+		game.load.spritesheet('player', 'images/player.png', 16, 16);
 		game.load.image('ladder', 'images/ladder.png');
 		game.load.image('gem', 'images/gem.png');
         game.load.image('menu', 'images/menu.png');
+        game.load.image('water', 'images/water.png');
         
         game.load.audio('music', 'audio/sound.mp3');
 	},
